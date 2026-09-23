@@ -2,19 +2,7 @@ openapi: 3.2.0
 info:
   title: Kargo Document Intake SKU Master API
   version: 1.0.0
-  description: 'Accepts either a single flattened "document" that may carry shipment, order, and order item data, or a shipment level document with multiple orders in `orders`.
-
-    For the existing single order format, the document is upserted against an existing order by `orderNumber`; if no such order exists a new one is created, which also creates the associated shipment.
-
-    For the multi order format, the API processes every entry in `orders` against the same shipment level fields, such as `business`, `facility`, `direction`, and `shipmentNumber`.
-
-    `business`, `facility`, and `direction` are always required. Single order requests require top level `orderNumber`; multi order requests require `shipmentNumber` and a non-empty `orders` list, and each order in the list requires `orderNumber`.
-
-    For client generation or local tooling, download the [OpenAPI YAML spec](/v1/docs/openapi.yaml).
-
-    See the [Document Intake API Handbook](https://docs.kargo.ai/rest-api) for examples and workflow details.
-
-    '
+  description: Accepts either a single flattened "document" that may carry shipment, order, and order item data, or a shipment level document with multiple orders in `orders`.
 servers:
 - url: /v1
 security:
@@ -26,9 +14,7 @@ paths:
     post:
       operationId: upsertSkuMaster
       summary: Create or update SKU master records
-      description: 'Creates or updates SKU master records for a facility. The request body is list-only: even a single SKU must be sent inside the `skus` array. Each SKU is upserted by `sku_id` within the provided `business` and `facility`. For existing SKUs, only fields provided in the request are updated; omitted fields are left unchanged.
-
-        '
+      description: 'Creates or updates SKU master records for a facility. The request body is list-only: even a single SKU must be sent inside the `skus` array. Each SKU is upserted by `sku_id` within the provided `business` and `facility`. For existing SKUs, only fields provided in the request are updated; omitted fields are left unchanged.'
       tags:
       - SKU Master
       requestBody:
@@ -150,9 +136,7 @@ paths:
 
         Example paginated request:
 
-        `GET /v1/sku_master?business=kargo&facility=sf&limit=100&offset=0`
-
-        '
+        `GET /v1/sku_master?business=kargo&facility=sf&limit=100&offset=0`'
       tags:
       - SKU Master
       parameters:
@@ -290,27 +274,6 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
-    SkuMasterUpsertRequest:
-      type: object
-      additionalProperties: false
-      required:
-      - business
-      - facility
-      - skus
-      properties:
-        business:
-          type: string
-          description: Business slug that scopes the facility, same as `/v1/documents`.
-        facility:
-          type: string
-          description: Facility slug that scopes the SKU master upsert, same as `/v1/documents`.
-        skus:
-          type: array
-          description: 'List of SKU master records to create or update. This field is list-only; send a one-item array to update a single SKU.
-
-            '
-          items:
-            $ref: '#/components/schemas/SkuMasterInput'
     SkuMasterListResult:
       type: object
       required:
@@ -361,57 +324,49 @@ components:
           description: SKU master records after the upsert operation.
           items:
             $ref: '#/components/schemas/SkuMaster'
-    SkuMasterInput:
+    SkuMasterUpsertRequest:
       type: object
       additionalProperties: false
       required:
-      - sku_id
-      description: 'Editable SKU master fields. `sku_id` is required and is used as the upsert key within the provided facility. All other fields are optional; when updating an existing SKU, omitted fields are left unchanged.
-
-        '
+      - business
+      - facility
+      - skus
       properties:
-        sku_id:
+        business:
           type: string
-          description: Unique SKU identifier within the facility.
-        description:
-          type:
-          - string
-          - 'null'
-          description: Human-readable description of the SKU.
-        unit_of_measure:
-          type:
-          - string
-          - 'null'
-          description: Unit used to measure SKU quantity, such as CASE, EACH, or PALLET.
-        unit_of_weight:
-          type:
-          - string
-          - 'null'
-          description: Unit used to measure SKU weight, such as LB or KG.
-        alternate_sku_ids:
-          type:
-          - array
-          - 'null'
-          description: Alternate SKU identifiers or barcodes associated with this SKU.
+          description: Business slug that scopes the facility, same as `/v1/documents`.
+        facility:
+          type: string
+          description: Facility slug that scopes the SKU master upsert, same as `/v1/documents`.
+        skus:
+          type: array
+          description: 'List of SKU master records to create or update. This field is list-only; send a one-item array to update a single SKU.
+
+            '
           items:
-            type: string
-        cases_per_pallet:
-          type:
-          - integer
-          - 'null'
-          description: Number of cases that fit on one pallet for this SKU.
-        cases_per_layer:
-          type:
-          - integer
-          - 'null'
-          description: Number of cases in one pallet layer for this SKU.
-        layers_per_pallet:
-          type:
-          - integer
-          - 'null'
-          description: Number of layers per pallet for this SKU.
-        sku_metadata:
-          description: Additional SKU metadata stored as JSON.
+            $ref: '#/components/schemas/SkuMasterInput'
+    Problem:
+      type: object
+      description: RFC 9457 problem detail.
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              detail:
+                type: string
     SkuMaster:
       type: object
       description: SKU master record from the `sku_master` database table.
@@ -474,28 +429,57 @@ components:
           - 'null'
           format: date-time
           description: Timestamp when the SKU master record was last updated.
-    Problem:
+    SkuMasterInput:
       type: object
-      description: RFC 9457 problem detail.
+      additionalProperties: false
+      required:
+      - sku_id
+      description: 'Editable SKU master fields. `sku_id` is required and is used as the upsert key within the provided facility. All other fields are optional; when updating an existing SKU, omitted fields are left unchanged.
+
+        '
       properties:
-        type:
+        sku_id:
           type: string
-          format: uri
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        errors:
-          type: array
+          description: Unique SKU identifier within the facility.
+        description:
+          type:
+          - string
+          - 'null'
+          description: Human-readable description of the SKU.
+        unit_of_measure:
+          type:
+          - string
+          - 'null'
+          description: Unit used to measure SKU quantity, such as CASE, EACH, or PALLET.
+        unit_of_weight:
+          type:
+          - string
+          - 'null'
+          description: Unit used to measure SKU weight, such as LB or KG.
+        alternate_sku_ids:
+          type:
+          - array
+          - 'null'
+          description: Alternate SKU identifiers or barcodes associated with this SKU.
           items:
-            type: object
-            properties:
-              path:
-                type: string
-              detail:
-                type: string
+            type: string
+        cases_per_pallet:
+          type:
+          - integer
+          - 'null'
+          description: Number of cases that fit on one pallet for this SKU.
+        cases_per_layer:
+          type:
+          - integer
+          - 'null'
+          description: Number of cases in one pallet layer for this SKU.
+        layers_per_pallet:
+          type:
+          - integer
+          - 'null'
+          description: Number of layers per pallet for this SKU.
+        sku_metadata:
+          description: Additional SKU metadata stored as JSON.
   securitySchemes:
     bearerAuth:
       type: http
