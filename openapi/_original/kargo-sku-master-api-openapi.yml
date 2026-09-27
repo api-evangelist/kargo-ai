@@ -276,56 +276,6 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
-    SkuMasterListResult:
-      type: object
-      required:
-      - skus
-      - total
-      - limit
-      - offset
-      - next_offset
-      properties:
-        skus:
-          type: array
-          description: SKU master records matching the request.
-          items:
-            $ref: '#/components/schemas/SkuMaster'
-        total:
-          type: integer
-          description: Total number of SKU master records matching the filter before pagination.
-        limit:
-          type:
-          - integer
-          - 'null'
-          description: Page size used for this request. Null when pagination is not enabled.
-        offset:
-          type:
-          - integer
-          - 'null'
-          description: Offset used for this request. Null when pagination is not enabled.
-        next_offset:
-          type:
-          - integer
-          - 'null'
-          description: Offset to use for the next page. Null when there is no next page or pagination is not enabled.
-    SkuMasterUpsertResult:
-      type: object
-      required:
-      - numRecordsAdded
-      - numRecordsUpdated
-      - skus
-      properties:
-        numRecordsAdded:
-          type: integer
-          description: Number of SKU master records created by the request.
-        numRecordsUpdated:
-          type: integer
-          description: Number of existing SKU master records updated by the request.
-        skus:
-          type: array
-          description: SKU master records after the upsert operation.
-          items:
-            $ref: '#/components/schemas/SkuMaster'
     SkuMasterUpsertRequest:
       type: object
       additionalProperties: false
@@ -369,6 +319,107 @@ components:
                 type: string
               detail:
                 type: string
+    SkuMasterListResult:
+      type: object
+      required:
+      - skus
+      - total
+      - limit
+      - offset
+      - next_offset
+      properties:
+        skus:
+          type: array
+          description: SKU master records matching the request.
+          items:
+            $ref: '#/components/schemas/SkuMaster'
+        total:
+          type: integer
+          description: Total number of SKU master records matching the filter before pagination.
+        limit:
+          type:
+          - integer
+          - 'null'
+          description: Page size used for this request. Null when pagination is not enabled.
+        offset:
+          type:
+          - integer
+          - 'null'
+          description: Offset used for this request. Null when pagination is not enabled.
+        next_offset:
+          type:
+          - integer
+          - 'null'
+          description: Offset to use for the next page. Null when there is no next page or pagination is not enabled.
+    SkuMasterInput:
+      type: object
+      additionalProperties: false
+      required:
+      - sku_id
+      description: 'Editable SKU master fields. `sku_id` is required and is used as the upsert key within the provided facility. All other fields are optional; when updating an existing SKU, omitted fields are left unchanged.
+
+        '
+      properties:
+        sku_id:
+          type: string
+          description: Unique SKU identifier within the facility.
+        description:
+          type:
+          - string
+          - 'null'
+          description: Human-readable description of the SKU.
+        unit_of_measure:
+          type:
+          - string
+          - 'null'
+          description: Unit used to measure SKU quantity, such as CASE, EACH, or PALLET.
+        unit_of_weight:
+          type:
+          - string
+          - 'null'
+          description: Unit used to measure SKU weight, such as LB or KG.
+        alternate_sku_ids:
+          type:
+          - array
+          - 'null'
+          description: Alternate SKU identifiers or barcodes associated with this SKU.
+          items:
+            type: string
+        cases_per_pallet:
+          type:
+          - integer
+          - 'null'
+          description: Number of cases that fit on one pallet for this SKU.
+        cases_per_layer:
+          type:
+          - integer
+          - 'null'
+          description: Number of cases in one pallet layer for this SKU.
+        layers_per_pallet:
+          type:
+          - integer
+          - 'null'
+          description: Number of layers per pallet for this SKU.
+        sku_metadata:
+          description: Additional SKU metadata stored as JSON.
+    SkuMasterUpsertResult:
+      type: object
+      required:
+      - numRecordsAdded
+      - numRecordsUpdated
+      - skus
+      properties:
+        numRecordsAdded:
+          type: integer
+          description: Number of SKU master records created by the request.
+        numRecordsUpdated:
+          type: integer
+          description: Number of existing SKU master records updated by the request.
+        skus:
+          type: array
+          description: SKU master records after the upsert operation.
+          items:
+            $ref: '#/components/schemas/SkuMaster'
     SkuMaster:
       type: object
       description: SKU master record from the `sku_master` database table.
@@ -431,57 +482,6 @@ components:
           - 'null'
           format: date-time
           description: Timestamp when the SKU master record was last updated.
-    SkuMasterInput:
-      type: object
-      additionalProperties: false
-      required:
-      - sku_id
-      description: 'Editable SKU master fields. `sku_id` is required and is used as the upsert key within the provided facility. All other fields are optional; when updating an existing SKU, omitted fields are left unchanged.
-
-        '
-      properties:
-        sku_id:
-          type: string
-          description: Unique SKU identifier within the facility.
-        description:
-          type:
-          - string
-          - 'null'
-          description: Human-readable description of the SKU.
-        unit_of_measure:
-          type:
-          - string
-          - 'null'
-          description: Unit used to measure SKU quantity, such as CASE, EACH, or PALLET.
-        unit_of_weight:
-          type:
-          - string
-          - 'null'
-          description: Unit used to measure SKU weight, such as LB or KG.
-        alternate_sku_ids:
-          type:
-          - array
-          - 'null'
-          description: Alternate SKU identifiers or barcodes associated with this SKU.
-          items:
-            type: string
-        cases_per_pallet:
-          type:
-          - integer
-          - 'null'
-          description: Number of cases that fit on one pallet for this SKU.
-        cases_per_layer:
-          type:
-          - integer
-          - 'null'
-          description: Number of cases in one pallet layer for this SKU.
-        layers_per_pallet:
-          type:
-          - integer
-          - 'null'
-          description: Number of layers per pallet for this SKU.
-        sku_metadata:
-          description: Additional SKU metadata stored as JSON.
   securitySchemes:
     bearerAuth:
       type: http
