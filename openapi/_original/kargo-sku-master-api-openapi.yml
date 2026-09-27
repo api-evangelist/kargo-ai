@@ -1,3 +1,5 @@
+# x-archived-from: kargo-sku-master-api-openapi.yml
+# x-archived-on: 2026-09-26
 openapi: 3.2.0
 info:
   title: Kargo Document Intake SKU Master API
