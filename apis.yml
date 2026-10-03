@@ -106,7 +106,7 @@ apis:
     url: https://docs.kargo.ai/graphql/
   - type: Postman
     url: postman/kargo-public-graphql.postman_collection.json
-- aid: kargo-ai:kargo-ai-documents-api
+- aid: kargo:kargo-documents-api
   name: Kargo Documents API
   description: The Documents API from Kargo — 1 operation(s) for documents.
   humanURL: https://docs.kargo.ai/graphql/
@@ -115,12 +115,12 @@ apis:
   - Documents
   properties:
   - type: OpenAPI
-    url: openapi/kargo-ai-documents-api-openapi.yml
+    url: openapi/kargo-documents-api-openapi.yml
   - type: APIReference
     url: https://api.kargo.zone/v1/docs/
   - type: Documentation
     url: https://docs.kargo.ai/rest-api
-- aid: kargo-ai:kargo-ai-sku-master-api
+- aid: kargo:kargo-sku-master-api
   name: Kargo SKU Master API
   description: The SKU Master API from Kargo — 1 operation(s) for sku master.
   humanURL: https://docs.kargo.ai/graphql/
@@ -129,7 +129,7 @@ apis:
   - SKU Master
   properties:
   - type: OpenAPI
-    url: openapi/kargo-ai-sku-master-api-openapi.yml
+    url: openapi/kargo-sku-master-api-openapi.yml
   - type: APIReference
     url: https://api.kargo.zone/v1/docs/
   - type: Documentation
