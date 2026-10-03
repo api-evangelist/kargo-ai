@@ -1,8 +1,8 @@
 openapi: 3.2.0
 info:
-  title: Kargo Ai Documents API
+  title: Kargo Document Intake Documents API
   version: 1.0.0
-  description: 'Operations tagged Documents across 2 of this provider''s published API definitions: kargo-document-intake-openapi.yml, kargo-documents-api-openapi.yml. Each path carries the servers of the definition it was published in.'
+  description: Accepts either a single flattened "document" that may carry shipment, order, and order item data, or a shipment level document with multiple orders in `orders`.
 servers:
 - url: /v1
 security:
@@ -347,175 +347,8 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
-    servers:
-    - url: /v1
 components:
   schemas:
-    Shipment:
-      type: object
-      description: The resulting shipment after the document is processed.
-      properties:
-        id:
-          type: integer
-        status:
-          type: string
-        expectedArrivalAt:
-          type: string
-          format: date-time
-        carrier:
-          type: string
-        purchaseOrder:
-          type: string
-        facility:
-          type: object
-          properties:
-            slug:
-              type: string
-            name:
-              type: string
-        statusEvents:
-          type: array
-          items:
-            type: object
-            properties:
-              status:
-                type: string
-              displayName:
-                type: string
-              completed:
-                type: boolean
-              completedAt:
-                type: string
-                format: date-time
-        orders:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-    OrderDirection:
-      type: string
-      enum:
-      - OUTBOUND
-      - INBOUND
-    OrderItemInput:
-      type: object
-      additionalProperties: false
-      properties:
-        identifier:
-          type: string
-          description: 'Customer supplied identifier for the item. Optional. This field is not used to match items for `MERGE` or `DELETE`; item matching uses `lpn` + `sku`.
-
-            '
-        lpn:
-          type: string
-          description: License plate number. Used together with `sku` as the item key for MERGE and DELETE.
-        sku:
-          type: string
-          description: SKU. Used together with `lpn` as the item key for MERGE and DELETE.
-        quantity:
-          type: integer
-        quantityUnit:
-          type: string
-          description: ShipperUnitType enum.
-        purchaseOrder:
-          type: string
-        description:
-          type: string
-        upc:
-          type: string
-        weightPerUnit:
-          type: number
-        weightUnit:
-          type: string
-          description: WeightUnit enum.
-        height:
-          type: number
-        length:
-          type: number
-        dimensionUnit:
-          type: string
-          description: DimensionUnit enum.
-        isDangerousGood:
-          type: boolean
-        lot:
-          type: string
-        expirationDate:
-          type: string
-          format: date
-        manufacturingDate:
-          type: string
-          format: date
-        caseSerials:
-          type: array
-          description: 'Case-level serials for this order item. Clients provide only `id` and `quantity`; Kargo stores these as order_item.sub_units with unit_type set to "case".
-
-            '
-          items:
-            $ref: '#/components/schemas/CaseSerial'
-    Order:
-      type: object
-      properties:
-        externalId:
-          type: string
-        orderNumber:
-          type: string
-        status:
-          type: string
-          enum:
-          - CREATED
-          - SCHEDULED
-          - COMPLETED
-        items:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/OrderItemInput'
-            - type: object
-              properties:
-                id:
-                  type: string
-    CaseSerial:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - quantity
-      properties:
-        id:
-          type: string
-          description: Case serial identifier.
-        quantity:
-          type: integer
-          description: Quantity represented by this case serial.
-    EntityRef:
-      type: object
-      required:
-      - type
-      - id
-      properties:
-        type:
-          type: string
-          enum:
-          - SHIPMENT
-          - ORDER
-          - ORDER_ITEM
-        id:
-          type: string
-          description: 'Kargo identifier of the affected entity: shipment id, order externalId, or order item id.
-
-            '
-        reference:
-          type: string
-          description: 'Human-facing key where one exists, such as `shipmentNumber` for a shipment, `orderNumber` for an order, or `lpn` + `sku` information for an order item.
-
-            '
-    OrderItemUpdateStrategy:
-      type: string
-      description: "How the incoming `items` reconcile with items already on the matched order:\nIf omitted and `items` are provided, defaults to `OVERWRITE`. If no\n`items` are provided, existing order items are unchanged.\n\n  - `APPEND`    — add incoming items to the order and keep existing items. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`. Duplicate `lpn` + `sku` pairs are rejected with `409 Conflict`; use `MERGE` to update existing items or `OVERWRITE` to replace the full item list.\n  - `OVERWRITE` — replace all existing order items with the incoming items. If multiple orders have the same order number, the most recently created order is updated. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`.\n  - `MERGE`     — update existing items matched by `lpn` + `sku`; non-matching incoming items are added. Each incoming item requires `lpn` and `sku`.\n  - `DELETE`    — remove existing order items matched by `lpn` + `sku`. Each incoming item requires `lpn` and `sku`.\n"
-      enum:
-      - APPEND
-      - OVERWRITE
-      - MERGE
-      - DELETE
     Document:
       type: object
       additionalProperties: false
@@ -665,6 +498,49 @@ components:
                 required:
                 - lpn
                 - sku
+    Order:
+      type: object
+      properties:
+        externalId:
+          type: string
+        orderNumber:
+          type: string
+        status:
+          type: string
+          enum:
+          - CREATED
+          - SCHEDULED
+          - COMPLETED
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/OrderItemInput'
+            - type: object
+              properties:
+                id:
+                  type: string
+    CaseSerial:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - quantity
+      properties:
+        id:
+          type: string
+          description: Case serial identifier.
+        quantity:
+          type: integer
+          description: Quantity represented by this case serial.
+    OrderItemUpdateStrategy:
+      type: string
+      description: "How the incoming `items` reconcile with items already on the matched order:\nIf omitted and `items` are provided, defaults to `OVERWRITE`. If no\n`items` are provided, existing order items are unchanged.\n\n  - `APPEND`    — add incoming items to the order and keep existing items. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`. Duplicate `lpn` + `sku` pairs are rejected with `409 Conflict`; use `MERGE` to update existing items or `OVERWRITE` to replace the full item list.\n  - `OVERWRITE` — replace all existing order items with the incoming items. If multiple orders have the same order number, the most recently created order is updated. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`.\n  - `MERGE`     — update existing items matched by `lpn` + `sku`; non-matching incoming items are added. Each incoming item requires `lpn` and `sku`.\n  - `DELETE`    — remove existing order items matched by `lpn` + `sku`. Each incoming item requires `lpn` and `sku`.\n"
+      enum:
+      - APPEND
+      - OVERWRITE
+      - MERGE
+      - DELETE
     DocumentResult:
       type: object
       required:
@@ -689,17 +565,6 @@ components:
             '
           items:
             $ref: '#/components/schemas/EntityRef'
-    ShipmentAdditionalField:
-      type: object
-      additionalProperties: false
-      required:
-      - name
-      - value
-      properties:
-        name:
-          type: string
-        value:
-          type: string
     Problem:
       type: object
       description: RFC 9457 problem detail.
@@ -722,6 +587,73 @@ components:
                 type: string
               detail:
                 type: string
+    EntityRef:
+      type: object
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+          enum:
+          - SHIPMENT
+          - ORDER
+          - ORDER_ITEM
+        id:
+          type: string
+          description: 'Kargo identifier of the affected entity: shipment id, order externalId, or order item id.
+
+            '
+        reference:
+          type: string
+          description: 'Human-facing key where one exists, such as `shipmentNumber` for a shipment, `orderNumber` for an order, or `lpn` + `sku` information for an order item.
+
+            '
+    OrderDirection:
+      type: string
+      enum:
+      - OUTBOUND
+      - INBOUND
+    Shipment:
+      type: object
+      description: The resulting shipment after the document is processed.
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        expectedArrivalAt:
+          type: string
+          format: date-time
+        carrier:
+          type: string
+        purchaseOrder:
+          type: string
+        facility:
+          type: object
+          properties:
+            slug:
+              type: string
+            name:
+              type: string
+        statusEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              displayName:
+                type: string
+              completed:
+                type: boolean
+              completedAt:
+                type: string
+                format: date-time
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
     BatchOrderInput:
       type: object
       additionalProperties: false
@@ -799,10 +731,73 @@ components:
                 required:
                 - lpn
                 - sku
+    ShipmentAdditionalField:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - value
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    OrderItemInput:
+      type: object
+      additionalProperties: false
+      properties:
+        identifier:
+          type: string
+          description: 'Customer supplied identifier for the item. Optional. This field is not used to match items for `MERGE` or `DELETE`; item matching uses `lpn` + `sku`.
+
+            '
+        lpn:
+          type: string
+          description: License plate number. Used together with `sku` as the item key for MERGE and DELETE.
+        sku:
+          type: string
+          description: SKU. Used together with `lpn` as the item key for MERGE and DELETE.
+        quantity:
+          type: integer
+        quantityUnit:
+          type: string
+          description: ShipperUnitType enum.
+        purchaseOrder:
+          type: string
+        description:
+          type: string
+        upc:
+          type: string
+        weightPerUnit:
+          type: number
+        weightUnit:
+          type: string
+          description: WeightUnit enum.
+        height:
+          type: number
+        length:
+          type: number
+        dimensionUnit:
+          type: string
+          description: DimensionUnit enum.
+        isDangerousGood:
+          type: boolean
+        lot:
+          type: string
+        expirationDate:
+          type: string
+          format: date
+        manufacturingDate:
+          type: string
+          format: date
+        caseSerials:
+          type: array
+          description: 'Case-level serials for this order item. Clients provide only `id` and `quantity`; Kargo stores these as order_item.sub_units with unit_type set to "case".
+
+            '
+          items:
+            $ref: '#/components/schemas/CaseSerial'
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-x-refined-from:
-- kargo-document-intake-openapi.yml
-- kargo-documents-api-openapi.yml
