@@ -47,6 +47,9 @@ x-source: harvest:secondary-market
 specificationVersion: '0.20'
 created: '2026-08-23'
 modified: '2026-08-23'
+x-docs-platform: docusaurus
+x-docs-platform-confidence: medium
+x-docs-platform-checked: 2026-10-03
 tags:
 - Company
 - Logistics
@@ -135,6 +138,9 @@ apis:
   - type: Documentation
     url: https://docs.kargo.ai/rest-api
 common:
+- type: CapabilityMap
+  url: capabilities/kargo-ai-capability-edges.yml
+  name: Kargo Business Capability Map
 - type: Overlay
   url: overlays/kargo-document-intake-overlay.yaml
 - type: Website
