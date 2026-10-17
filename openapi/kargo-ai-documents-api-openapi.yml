@@ -349,6 +349,83 @@ paths:
                 $ref: '#/components/schemas/Problem'
 components:
   schemas:
+    BatchOrderInput:
+      type: object
+      additionalProperties: false
+      required:
+      - orderNumber
+      description: 'One order inside a shipment level multi order document. `orderNumber` identifies the order. Each order can provide its own `orderItemUpdateStrategy`, so different orders in the same shipment can use different strategies. If `orderItemUpdateStrategy` is omitted for this order, the top level `orderItemUpdateStrategy` is used. If neither value is provided, Kargo treats the order item update strategy as `OVERWRITE`.
+
+        '
+      properties:
+        orderNumber:
+          type: string
+          description: 'Upsert key for this order. This is the Kargo order identifier.
+
+            '
+        orderType:
+          type: string
+        purchaseOrder:
+          type: string
+        consigneeName:
+          type: string
+        consigneePhoneNumber:
+          type: string
+        bolNumber:
+          type: string
+        expectedQuantity:
+          type: integer
+        sealNumber:
+          type: string
+        supplier:
+          type: string
+        client:
+          type: string
+        destination:
+          type: string
+        orderItemUpdateStrategy:
+          allOf:
+          - $ref: '#/components/schemas/OrderItemUpdateStrategy'
+          description: 'Optional order level item update strategy. When provided, this overrides the top level `orderItemUpdateStrategy` for this order.
+
+            '
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemInput'
+      allOf:
+      - if:
+          required:
+          - orderItemUpdateStrategy
+          properties:
+            orderItemUpdateStrategy:
+              enum:
+              - APPEND
+              - OVERWRITE
+        then:
+          properties:
+            items:
+              items:
+                required:
+                - lpn
+                - sku
+                - quantity
+                - quantityUnit
+      - if:
+          required:
+          - orderItemUpdateStrategy
+          properties:
+            orderItemUpdateStrategy:
+              enum:
+              - MERGE
+              - DELETE
+        then:
+          properties:
+            items:
+              items:
+                required:
+                - lpn
+                - sku
     Document:
       type: object
       additionalProperties: false
@@ -498,49 +575,6 @@ components:
                 required:
                 - lpn
                 - sku
-    Order:
-      type: object
-      properties:
-        externalId:
-          type: string
-        orderNumber:
-          type: string
-        status:
-          type: string
-          enum:
-          - CREATED
-          - SCHEDULED
-          - COMPLETED
-        items:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/OrderItemInput'
-            - type: object
-              properties:
-                id:
-                  type: string
-    CaseSerial:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - quantity
-      properties:
-        id:
-          type: string
-          description: Case serial identifier.
-        quantity:
-          type: integer
-          description: Quantity represented by this case serial.
-    OrderItemUpdateStrategy:
-      type: string
-      description: "How the incoming `items` reconcile with items already on the matched order:\nIf omitted and `items` are provided, defaults to `OVERWRITE`. If no\n`items` are provided, existing order items are unchanged.\n\n  - `APPEND`    — add incoming items to the order and keep existing items. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`. Duplicate `lpn` + `sku` pairs are rejected with `409 Conflict`; use `MERGE` to update existing items or `OVERWRITE` to replace the full item list.\n  - `OVERWRITE` — replace all existing order items with the incoming items. If multiple orders have the same order number, the most recently created order is updated. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`.\n  - `MERGE`     — update existing items matched by `lpn` + `sku`; non-matching incoming items are added. Each incoming item requires `lpn` and `sku`.\n  - `DELETE`    — remove existing order items matched by `lpn` + `sku`. Each incoming item requires `lpn` and `sku`.\n"
-      enum:
-      - APPEND
-      - OVERWRITE
-      - MERGE
-      - DELETE
     DocumentResult:
       type: object
       required:
@@ -565,183 +599,6 @@ components:
             '
           items:
             $ref: '#/components/schemas/EntityRef'
-    Problem:
-      type: object
-      description: RFC 9457 problem detail.
-      properties:
-        type:
-          type: string
-          format: uri
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              path:
-                type: string
-              detail:
-                type: string
-    EntityRef:
-      type: object
-      required:
-      - type
-      - id
-      properties:
-        type:
-          type: string
-          enum:
-          - SHIPMENT
-          - ORDER
-          - ORDER_ITEM
-        id:
-          type: string
-          description: 'Kargo identifier of the affected entity: shipment id, order externalId, or order item id.
-
-            '
-        reference:
-          type: string
-          description: 'Human-facing key where one exists, such as `shipmentNumber` for a shipment, `orderNumber` for an order, or `lpn` + `sku` information for an order item.
-
-            '
-    OrderDirection:
-      type: string
-      enum:
-      - OUTBOUND
-      - INBOUND
-    Shipment:
-      type: object
-      description: The resulting shipment after the document is processed.
-      properties:
-        id:
-          type: integer
-        status:
-          type: string
-        expectedArrivalAt:
-          type: string
-          format: date-time
-        carrier:
-          type: string
-        purchaseOrder:
-          type: string
-        facility:
-          type: object
-          properties:
-            slug:
-              type: string
-            name:
-              type: string
-        statusEvents:
-          type: array
-          items:
-            type: object
-            properties:
-              status:
-                type: string
-              displayName:
-                type: string
-              completed:
-                type: boolean
-              completedAt:
-                type: string
-                format: date-time
-        orders:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-    BatchOrderInput:
-      type: object
-      additionalProperties: false
-      required:
-      - orderNumber
-      description: 'One order inside a shipment level multi order document. `orderNumber` identifies the order. Each order can provide its own `orderItemUpdateStrategy`, so different orders in the same shipment can use different strategies. If `orderItemUpdateStrategy` is omitted for this order, the top level `orderItemUpdateStrategy` is used. If neither value is provided, Kargo treats the order item update strategy as `OVERWRITE`.
-
-        '
-      properties:
-        orderNumber:
-          type: string
-          description: 'Upsert key for this order. This is the Kargo order identifier.
-
-            '
-        orderType:
-          type: string
-        purchaseOrder:
-          type: string
-        consigneeName:
-          type: string
-        consigneePhoneNumber:
-          type: string
-        bolNumber:
-          type: string
-        expectedQuantity:
-          type: integer
-        sealNumber:
-          type: string
-        supplier:
-          type: string
-        client:
-          type: string
-        destination:
-          type: string
-        orderItemUpdateStrategy:
-          allOf:
-          - $ref: '#/components/schemas/OrderItemUpdateStrategy'
-          description: 'Optional order level item update strategy. When provided, this overrides the top level `orderItemUpdateStrategy` for this order.
-
-            '
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderItemInput'
-      allOf:
-      - if:
-          required:
-          - orderItemUpdateStrategy
-          properties:
-            orderItemUpdateStrategy:
-              enum:
-              - APPEND
-              - OVERWRITE
-        then:
-          properties:
-            items:
-              items:
-                required:
-                - lpn
-                - sku
-                - quantity
-                - quantityUnit
-      - if:
-          required:
-          - orderItemUpdateStrategy
-          properties:
-            orderItemUpdateStrategy:
-              enum:
-              - MERGE
-              - DELETE
-        then:
-          properties:
-            items:
-              items:
-                required:
-                - lpn
-                - sku
-    ShipmentAdditionalField:
-      type: object
-      additionalProperties: false
-      required:
-      - name
-      - value
-      properties:
-        name:
-          type: string
-        value:
-          type: string
     OrderItemInput:
       type: object
       additionalProperties: false
@@ -797,6 +654,149 @@ components:
             '
           items:
             $ref: '#/components/schemas/CaseSerial'
+    OrderDirection:
+      type: string
+      enum:
+      - OUTBOUND
+      - INBOUND
+    Order:
+      type: object
+      properties:
+        externalId:
+          type: string
+        orderNumber:
+          type: string
+        status:
+          type: string
+          enum:
+          - CREATED
+          - SCHEDULED
+          - COMPLETED
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/OrderItemInput'
+            - type: object
+              properties:
+                id:
+                  type: string
+    OrderItemUpdateStrategy:
+      type: string
+      description: "How the incoming `items` reconcile with items already on the matched order:\nIf omitted and `items` are provided, defaults to `OVERWRITE`. If no\n`items` are provided, existing order items are unchanged.\n\n  - `APPEND`    — add incoming items to the order and keep existing items. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`. Duplicate `lpn` + `sku` pairs are rejected with `409 Conflict`; use `MERGE` to update existing items or `OVERWRITE` to replace the full item list.\n  - `OVERWRITE` — replace all existing order items with the incoming items. If multiple orders have the same order number, the most recently created order is updated. Each incoming item requires `lpn`, `sku`, `quantity`, and `quantityUnit`.\n  - `MERGE`     — update existing items matched by `lpn` + `sku`; non-matching incoming items are added. Each incoming item requires `lpn` and `sku`.\n  - `DELETE`    — remove existing order items matched by `lpn` + `sku`. Each incoming item requires `lpn` and `sku`.\n"
+      enum:
+      - APPEND
+      - OVERWRITE
+      - MERGE
+      - DELETE
+    EntityRef:
+      type: object
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+          enum:
+          - SHIPMENT
+          - ORDER
+          - ORDER_ITEM
+        id:
+          type: string
+          description: 'Kargo identifier of the affected entity: shipment id, order externalId, or order item id.
+
+            '
+        reference:
+          type: string
+          description: 'Human-facing key where one exists, such as `shipmentNumber` for a shipment, `orderNumber` for an order, or `lpn` + `sku` information for an order item.
+
+            '
+    Shipment:
+      type: object
+      description: The resulting shipment after the document is processed.
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        expectedArrivalAt:
+          type: string
+          format: date-time
+        carrier:
+          type: string
+        purchaseOrder:
+          type: string
+        facility:
+          type: object
+          properties:
+            slug:
+              type: string
+            name:
+              type: string
+        statusEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              displayName:
+                type: string
+              completed:
+                type: boolean
+              completedAt:
+                type: string
+                format: date-time
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    Problem:
+      type: object
+      description: RFC 9457 problem detail.
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              detail:
+                type: string
+    CaseSerial:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - quantity
+      properties:
+        id:
+          type: string
+          description: Case serial identifier.
+        quantity:
+          type: integer
+          description: Quantity represented by this case serial.
+    ShipmentAdditionalField:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - value
+      properties:
+        name:
+          type: string
+        value:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
